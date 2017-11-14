@@ -87,7 +87,7 @@ end
 % automatically). If the ONLY_CVM flag is set, all fields will be gridded
 % by CVM.
 Data_fields = fieldnames(Data);
-cvm_fields = [BEHR_publishing_gridded_fields.cvm_gridded_vars,Data_fields(end), BEHR_publishing_gridded_fields.flag_vars];
+cvm_fields = [BEHR_publishing_gridded_fields.cvm_gridded_vars,Data_fields(end-1),Data_fields(end), BEHR_publishing_gridded_fields.flag_vars];
 psm_fields = BEHR_publishing_gridded_fields.psm_gridded_vars;
 if only_cvm
     cvm_fields = [psm_fields, cvm_fields];
@@ -106,6 +106,7 @@ fns = fieldnames(Data);
 % Used to check for fill values
 attributes = BEHR_publishing_attribute_table('struct');
 attributes.WRF_AK_Column_NO2 = attributes.BEHRColumnAmountNO2TropVisOnly;
+attributes.WRF_Column_NO2 = attributes.BEHRColumnAmountNO2TropVisOnly;
 
 % Need to extract these fields that aren't needed for gridding now because
 % we remove them before passing to the gridding code, which expects all
