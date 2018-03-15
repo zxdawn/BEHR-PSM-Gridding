@@ -12,7 +12,7 @@ import numpy
 
 
 # build extension with CYTHON?
-USE_CYTHON = False
+USE_CYTHON = True
 
 ext = '.pyx' if USE_CYTHON else '.c'
 extensions = [Extension("omi.cgrate", ["omi/cgrate"+ext])]
