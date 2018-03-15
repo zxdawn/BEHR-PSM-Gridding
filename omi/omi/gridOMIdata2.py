@@ -252,7 +252,7 @@ def test():
     #filename='I:\OMI\OMNO2.003\level3\Germany\NO2_psm_(2012_1_2)_lat(40.0_55.0)_lon(-5.0_20.0)_res(0.01).he5'
     #filename='I:\OMI\OMNO2.003\level3\global\NO2_psm_(2011_1_1)_lat(-70.0_80.0)_lon(-180.0_180.0)_res(0.1).he5'
     #filename='F:\programs\Python\Gridding\omigrid\examples\NO2_psm_(2005_11_20)_lat(-90.0_90.0)_lon(-180.0_180.0)_res(0.1)1.he5'
-    filename='I:\OMI\OMNO2.003\level3\global\NO2_psm_(2005_1_1)_lat(-90.0_90.0)_lon(-180.0_180.0)_res(0.1).he5'
+    filename=r'I:\OMI\OMNO2.003\level3\global\NO2_psm_(2005_1_1)_lat(-90.0_90.0)_lon(-180.0_180.0)_res(0.1).he5'
     with h5py.File(filename, 'r') as f:
         for name in f:
             print (name)
