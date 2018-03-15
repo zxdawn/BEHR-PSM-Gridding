@@ -548,7 +548,7 @@ def average_days(startdate,enddate,grid_name,gridding_method,displaymaps):
     
         try:
             vdata,errdata,wdata,lon,lat=read_map(startdate+timedelta(d),grid_name,gridding_method)
-        except IOError, e:
+        except (IOError, e):
             print ('Error reading file: ')
             print (e)
         else:
