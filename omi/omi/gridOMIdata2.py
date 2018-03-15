@@ -166,7 +166,7 @@ def griddata(startdate, enddate, gridding_method, grid_name, data_path,grid, dis
 
         # 8) Grid orbit using PSM or CVM:
         if dispmessages:
-            print 'time: %s, orbit: %d' % (timestamp, orbit)
+            print ('time: %s, orbit: %d' % (timestamp, orbit))
         if gridding_method == 'psm':
             grid = omi.psm_grid(grid,
                 data['Longitude'], data['Latitude'],
@@ -197,7 +197,7 @@ def griddata(startdate, enddate, gridding_method, grid_name, data_path,grid, dis
         filename='%s/OMNO2.003/level3/%s/NO2_%s_(%s_%s_%s-%s_%s_%s)_lat(%s_%s)_lon(%s_%s)_res(%s)'% (data_path,grid_name,gridding_method, startdate.year,startdate.month,startdate.day, (enddate+timedelta(days=-1)).year,(enddate+timedelta(days=-1)).month,(enddate+timedelta(days=-1)).day, grid.llcrnrlat, grid.urcrnrlat, grid.llcrnrlon, grid.urcrnrlon,grid.resolution)
 
     if dispmessages:
-        print 'writing: ',filename
+        print ('writing: ',filename)
     grid.save_as_he5(filename+'.he5')
     #grid.save_as_image(filename+'.png', vmin=0, vmax=rho_est)
 
@@ -255,20 +255,20 @@ def test():
     filename='I:\OMI\OMNO2.003\level3\global\NO2_psm_(2005_1_1)_lat(-90.0_90.0)_lon(-180.0_180.0)_res(0.1).he5'
     with h5py.File(filename, 'r') as f:
         for name in f:
-            print name
+            print (name)
         errdata=f.get('errors');
         vdata=f.get('values');
         wdata=f.get('weights')
         #wdata=wdata*1e35;
-        print type(wdata.value)
+        print (type(wdata.value))
         #wdata= np.array(wdata)*1e35
         wdata=wdata.value*1e35
-        print type(wdata)
+        print (type(wdata))
         #print errdata.value[1::100,1::100]
         #print vdata.value[1::100,1::100]
         #print wdata[1::100,1::100]
         s=errdata.shape
-        print s[0],s[1]
+        print (s[0],s[1])
 
         
         plt.imshow(np.rot90(vdata),cmap='jet')
@@ -277,10 +277,10 @@ def test():
         d=wdata[1::100,1::100]
         #wdata[wdata<=0]=0
         np.set_printoptions(precision =3,suppress=False,threshold='nan',linewidth=160)
-        print d
+        print (d)
         d[np.isnan(d)]=0
         d[d<0]=0
-        print np.int_(d)
+        print (np.int_(d))
         #print(np.vectorize("%.2f".__mod__)(d))
 
 
@@ -305,13 +305,13 @@ def main(argv):
     try:
         opts, args = getopt.getopt(argv,"hs:e:a:o:",["startdate=","enddate=","area=","output="])
     except getopt.GetoptError:
-        print 'specify startdate (startdate=dd.mm.yyy), enddate (enddate=dd.mm.yyy), and aerea (area=global/Germany/Europe/Northamerica/Asia)'
+        print ('specify startdate (startdate=dd.mm.yyy), enddate (enddate=dd.mm.yyy), and aerea (area=global/Germany/Europe/Northamerica/Asia)')
         sys.exit(2)
-    print opts
-    print args
+    print (opts)
+    print (args)
     for opt, arg in opts:
         if opt == '-h':
-            print 'specify startdate (startdate=dd.mm.yyy), enddate (enddate=dd.mm.yyy), and aerea (area=global/Germany/Europe/Northamerica/Asia)'
+            print ('specify startdate (startdate=dd.mm.yyy), enddate (enddate=dd.mm.yyy), and aerea (area=global/Germany/Europe/Northamerica/Asia)')
             sys.exit()
         elif opt in ("-s", "--startdate"):
             startdate = arg
@@ -323,10 +323,10 @@ def main(argv):
             if arg not in ('no output','nooutput','no_output','no','false','False'):
                 dispmessages=True
             #else:
-    print 'startdate is ', startdate
-    print 'enddate is ', enddate
-    print 'area is ', area
-    print 'displaymessages is ', dispmessages
+    print ('startdate is ', startdate)
+    print ('enddate is ', enddate)
+    print ('area is ', area)
+    print ('displaymessages is ', dispmessages)
 
 
     date_object = datetime.strptime('Jun 1 2005  1:33PM', '%b %d %Y %I:%M%p')
@@ -347,7 +347,7 @@ def main(argv):
     else:         
         data_path = '/home/zoidberg/OMI'
     if dispmessages:
-        print 'OMI data path: ',data_path
+        print ('OMI data path: ',data_path)
     
     # The start and end date of Level 2 data you want to grid. The enddate
     # is NOT included!
@@ -381,7 +381,7 @@ def main(argv):
     diff = enddate - startdate
     for d in range(diff.days + 1):
         if dispmessages:
-            print startdate+timedelta(d)
+            print (startdate+timedelta(d))
         griddata(startdate+timedelta(d),startdate+timedelta(d+1), 'psm', grid_name, data_path, grid, dispmessages)
         #griddata(startdate+timedelta(d),startdate+timedelta(d+1), 'cvm', grid_name, data_path, grid, dispmessages)
     #griddata(startdate, enddate, 'psm', grid_name, data_path)
@@ -391,7 +391,7 @@ def main(argv):
     #griddata(startdate,startdate+timedelta(1), 'psm', grid_name, data_path, grid, dispmessages)
     endtime=time.clock()
     if dispmessages:
-        print 'time: ',(endtime-starttime)/60,' min'
+        print ('time: ',(endtime-starttime)/60,' min')
 
 def show_map(vdata,errdata,wdata,zoom,date):
     if 'fig' not in globals():            
@@ -487,7 +487,7 @@ def read_map(mapdate,grid_name,gridding_method):
     grid=gridname2grid(grid_name)
     filename='%s/OMNO2.003/level3/%s/NO2_%s_(%s_%s_%s)_lat(%s_%s)_lon(%s_%s)_res(%s).he5'% (data_path,grid_name,gridding_method,mapdate.year,mapdate.month,mapdate.day, grid.llcrnrlat, grid.urcrnrlat, grid.llcrnrlon, grid.urcrnrlon,grid.resolution)
 
-    print filename
+    print (filename)
     
     with h5py.File(filename, 'r') as f:
         #for name in f:
@@ -517,7 +517,7 @@ def read_maps(startdate,enddate,grid_name,gridding_method):
 ##    grid=gridname2grid(grid_name)
     #filename='%s/OMNO2.003/level3/%s/NO2_%s_(%s_%s_%s)_lat(%s_%s)_lon(%s_%s)_res(%s).he5'% (data_path,grid_name,gridding_method,mapdate.year,mapdate.month,mapdate.day, grid.llcrnrlat, grid.urcrnrlat, grid.llcrnrlon, grid.urcrnrlon,grid.resolution)
     filename=generate_filename(startdate,enddate,grid_name,gridding_method,'he5')
-    print 'reading ',filename
+    print ('reading ',filename)
     
     with h5py.File(filename, 'r') as f:
         #for name in f:
@@ -544,13 +544,13 @@ def average_days(startdate,enddate,grid_name,gridding_method,displaymaps):
     #avweight=np.zeros((s1,s2))
     diff = enddate - startdate
     for d in range(diff.days + 1):
-        print startdate+timedelta(d)
+        print (startdate+timedelta(d))
     
         try:
             vdata,errdata,wdata,lon,lat=read_map(startdate+timedelta(d),grid_name,gridding_method)
         except IOError, e:
-            print 'Error reading file: '
-            print e
+            print ('Error reading file: ')
+            print (e)
         else:
             #print 'wdata',wdata[1,1], wdata[1010:1015,110:115]
             #print 'vdata',vdata[1,1],vdata[1010:1015,110:115]
@@ -564,9 +564,9 @@ def average_days(startdate,enddate,grid_name,gridding_method,displaymaps):
             avweight+=wdata
             averr+=wdata**2+errdata**2
             if displaymaps:
-                print 'wdata_',wdata[1,1],wdata[1010:1015,110:115]
-                print 'avmap',avmap[1,1],avmap[1010:1015,110:115]
-                print 'avweight',avweight[1,1],avweight[1010:1015,110:115]
+                print ('wdata_',wdata[1,1],wdata[1010:1015,110:115])
+                print ('avmap',avmap[1,1],avmap[1010:1015,110:115])
+                print ('avweight',avweight[1,1],avweight[1010:1015,110:115])
                 #show_map(vdata,errdata,wdata,False,startdate+timedelta(d))
                 showmap=np.divide(avmap,avweight)
                 showmap[showmap==0]=np.nan
@@ -591,7 +591,7 @@ def average_days(startdate,enddate,grid_name,gridding_method,displaymaps):
         data_path = '/home/zoidberg/OMI'
 
     filename='%s/OMNO2.003/level3/av_%s/NO2_%s_(%s_%s_%s-%s_%s_%s)_lat(%s_%s)_lon(%s_%s)_res(%s).he5'% (data_path,grid_name,gridding_method, startdate.year,startdate.month,startdate.day, enddate.year,enddate.month,enddate.day, grid.llcrnrlat, grid.urcrnrlat, grid.llcrnrlon, grid.urcrnrlon,grid.resolution)
-    print 'writing ', filename
+    print ('writing ', filename)
     he5.write_datasets(filename, data)
     if displaymaps:
         plt.ioff()
@@ -607,7 +607,7 @@ def convert_map2jpg(startdate,enddate,grid_name,gridding_method,vmin,vmax):
     grid=gridname2grid(grid_name)
     #filename='%s/OMNO2.003/level3/av%s/NO2_%s_(%s_%s_%s-%s_%s_%s)_lat(%s_%s)_lon(%s_%s)_res(%s).jpg'% (data_path,grid_name,gridding_method, startdate.year,startdate.month,startdate.day, enddate.year,enddate.month,enddate.day, grid.llcrnrlat, grid.urcrnrlat, grid.llcrnrlon, grid.urcrnrlon,grid.resolution)
     filename=generate_filename(startdate,enddate,grid_name,gridding_method,'jpg')
-    print 'writing ', filename
+    print ('writing ', filename)
     #he5.write_datasets(filename, data)
 
 
