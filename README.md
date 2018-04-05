@@ -39,7 +39,21 @@ Build h5py against this version of HDF5.
 
 ```
 python setup.py configure --hdf5=/path/to/hdf5
+python setup.py configure --hdf5-version=1.8.12
+python setup.py configure --mpi
+```
+```
+********************************************************************************
+                       Summary of the h5py configuration
+
+    Path to HDF5: '/nuist/u/home/yinyan/xin/software/hdf5_1.8.12'
+    HDF5 Version: '1.8.12'
+     MPI Enabled: True
+Rebuild Required: True
+
+********************************************************************************
+```
+```
 python setup.py install
 ```
-
 This works for Python 3 with gcc only.
