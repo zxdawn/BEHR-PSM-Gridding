@@ -31,6 +31,26 @@ row_anomaly_affected_fields = ['CloudFraction', 'CloudRadianceFraction', 'CloudP
                                'SlantColumnAmountNO2', 'ColumnAmountNO2Trop', 'ColumnAmountNO2TropStd',
                                'ColumnAmountNO2Strat', 'BEHRColumnAmountNO2Trop', 'BEHRColumnAmountNO2TropVisOnly']
 
+# These are fields that should be 1D because they have only the
+# along or across track dimension (not both). We use this cell array during
+# the conversion from Matlab arrays to Python Numpy arrays to represent
+# this properly. This only matters in the rare case where only a single
+# line of data is retained in an orbit (i.e. Longitude would be 1x60).
+# This is important in two places in the gridding algorithm:
+#   1) in generic_preprocessing, the area is replicated to be the same
+#   shape as the quantity being gridded. If the gridded quantity is 1D,
+#   this ends up making the area too big, because it uses the quantity
+#   across track dimension as its along track dimension (since the along
+#   track dimension doesn't exist)
+#   2) in remove_out_of_domain_data (in omi.__init__) how it cuts down data
+#   depends on if the data is 1, 2, or 3 dimensional. Therefore, it's
+#   important to keep the actually 1D variables 1D so that it doesn't try
+#   to use along and across track slicing on a 1D variable. (We could have
+#   modified remove_out_of_domain_data to check if a 2D variable has a
+#   length 1 dimension, but this way keeps the representation of 1D data on
+#   the Python side consistent.)
+one_d_fields = ['SpacecraftAltitude', 'SpacecraftLatitude', 'SpacecraftLongitude', 'Time', 'TiledArea', 'FoV75Area']
+
 # These are fields that should be masked if the VcdQualityFlags field indicates a problem with the VCD algorithm
 vcd_qualtity_affected_fields = ['ColumnAmountNO2Trop', 'ColumnAmountNO2TropStd', 'ColumnAmountNO2Strat',
                                 'ColumnAmountNO2', 'BEHRColumnAmountNO2Trop', 'BEHRColumnAmountNO2TropVisOnly']
@@ -254,6 +274,29 @@ def preprocessing(gridding_method, fov75_area, gridded_quantity, gridded_quantit
     return values, errors, stddev, weights
 
 
+def simple_preprocessing(values, errors, weights):
+    """
+    Preprocessing function for the simple interface to the CVM gridding code
+    :param values: the values that will be gridded, as a regular numpy array
+    :param errors: the errors for the values, as a regular numpy array
+    :param weights: the weights for the values, as a regular numpy array
+    :return: values, errors, weights as masked arrays with the same elements masked in all three, plus the mask itself
+     The arrays will be masked by numpy.ma.masked_invalid
+    """
+
+    values = ma.masked_invalid(values)
+    errors = ma.masked_invalid(errors)
+    weights = ma.masked_invalid(weights)
+
+    mask = values.mask | errors.mask | weights.mask
+
+    values.mask = mask
+    errors.mask = mask
+    weights.mask = mask
+
+    return values, errors, weights, mask
+
+
 def generate_filename(save_path, gridding_method, column_product, date_in, date_end=None):
     if date_end is None:
         fname = 'OMI_{3}_{2}_{0}_{1}.he5'.format(behr_version(),
@@ -432,11 +475,6 @@ def grid_orbit(data, grid_info, gridded_quantity, gridding_method='psm', preproc
         if len(missing_keys) > 0:
             raise KeyError('data is missing the following expected keys: {0}'.format(', '.join(missing_keys)))
 
-    # Ensure 1D datasets are actually 1D by removing any singleton dimensions that Matlab adds because it treats any
-    # array as at least 2D.
-    for k, v in data.iteritems():
-        data[k] = v.squeeze()
-
     grid = make_grid(grid_info)
     wgrid = make_grid(grid_info)
 
@@ -577,14 +615,6 @@ def imatlab_gridding(data_in, grid_in, field_to_grid, preprocessing_method='gene
     else:
         raise TypeError('data_in must be a dict or a list/tuple of dicts')
 
-    if __save_swath__:
-        lastfile = sorted(glob('data-imatlab_gridding-pre_mask-*.he5'))
-        if len(lastfile) > 0:
-            lastfile = lastfile[-1]
-            i_swath = int(re.search('\d\d', lastfile).group())
-        else:
-            i_swath = 0
-
     # Validate the fields present
     missing_fields = []
     field_type_warn = []
@@ -603,18 +633,52 @@ def imatlab_gridding(data_in, grid_in, field_to_grid, preprocessing_method='gene
 
     for swath in data_in:
         for k, v in swath.items():
+            if k in one_d_fields:
+                if v.ndim == 1:
+                    continue
+                    
+                if verbosity > 2:
+                    print('Squeezing field {} to 1D'.format(k))
+                v = v.squeeze()
+                # This is a kludge to avoid squeezing completely down to a 0D array since that breaks omi.remove_out_of_domain_data
+                if v.ndim == 0:
+                    v = v.reshape(1)
             swath[k] = np.ma.masked_invalid(v)
-
-    if __save_swath__:
-        lastfile = sorted(glob('data-imatlab_gridding-post_mask-*.he5'))
-        if len(lastfile) > 0:
-            lastfile = lastfile[-1]
-            i_swath = int(re.search('\d\d', lastfile).group())
-        else:
-            i_swath = 0
 
     return grid_day_from_interface(data_in, grid_in, gridding_method, field_to_grid, preprocessing_method,
                                    verbosity=verbosity)
+
+
+def igridding_simple(grid_info, loncorn, latcorn, vals, errors=None, weights=None, is_flag=False):
+    """
+    Interface method that applies CVM gridding to a simple set of data defined in 2D numpy arrays
+    :param grid_info: a dictionary that can be given to omi.Grid as omi.Grid(**grid_info)
+    :param loncorn: the longitude corner coordinates of the data to grid as a 3D numpy array; assumes that the corners
+     are given along the first dimension, i.e. loncorn[:,i,j] is the slice with the corner coordinates for pixel i, j
+    :param latcorn: the latitude corner coordinate of the data to grid as a 3D numpy array; same format as loncorn.
+    :param vals: the values to grid as a 2D numpy array
+    :return: a 2D numpy array with the values gridded to the lon/lat coordinates defined in grid and a 2D numpy array
+    with the weighting values
+    """
+
+    if errors is None:
+        errors = np.zeros_like(vals)
+    if weights is None:
+        weights = np.ones_like(vals)
+
+    vals, errors, weights, mask = simple_preprocessing(vals, errors, weights)
+
+    grid_in = omi.Grid(**grid_info)
+
+    grid = omi.cvm_grid(grid_in, loncorn, latcorn, vals, errors, weights, mask, is_flag=is_flag)
+
+    # For now, unlike the normal gridding method, we will retain NaNs in the gridded values and weights
+    grid_weights = grid.weights
+    grid.norm()
+    grid_values = grid.values
+
+    return grid_values, grid_weights
+
 
 def main(verbosity=0):
     start = datetime.datetime(2013, 6, 1)

@@ -35,6 +35,13 @@ function [ OMI_PSM, MODIS_Cloud_Mask ] = psm_wrapper( Data, BEHR_Grid, varargin 
 %       export HDF5_DISABLE_VERSION_CHECK=2
 %
 %   before starting Matlab.
+%
+%   ANOTHER NOTE: If the call to PSM_Main is failing on some call to a
+%   cgrate module function, trying deleting cgrate.c and recompiling the
+%   omi package through Matlab (using BEHR_initial_setup). That fixed this
+%   problem on a call to omi.cgrate.draw_orbit() for me, likely because,
+%   when called from the terminal, a different include path was used for
+%   numpy.   
 
 
 E = JLLErrors;
@@ -95,6 +102,7 @@ if only_cvm
 end
 
 all_req_fields = unique([req_fields, cvm_fields, psm_fields]);
+
 % We should remove the fields that are not required by the algorithm,
 % becuase the PSM algorithm makes some assumptions about the fields
 % present, which messes up the "clip_orbit" function (mainly the fields
@@ -117,7 +125,9 @@ swath_attr_fields = BEHR_publishing_gridded_fields.swath_attr_vars;
 
 swath_attr_fields = intersect(swath_attr_fields,Data_fields);
 for a=1:numel(swath_attr_fields)
-    swath_attrs.(swath_attr_fields{a}) = {Data.(swath_attr_fields{a})};
+    if isfield(Data, swath_attr_fields{a})
+        swath_attrs.(swath_attr_fields{a}) = {Data.(swath_attr_fields{a})};
+    end
 end
 
 for a=1:numel(fns)
@@ -163,11 +173,16 @@ for a=1:numel(Data)
     
     % Will convert Data structure to a dictionary (or list of
     % dictionaries).
-    pydata = struct2pydict(Data(a));
+    pydata = struct2pydict(Data(a), 'array1', 'always');
 
     % Next call the PSM gridding algorithm.
     for b=1:numel(psm_fields)
-        if DEBUG_LEVEL > 1
+        if ~isfield(Data, psm_fields{b})
+            if DEBUG_LEVEL > 0
+                fprintf('  Skipping gridding %s with PSM because it is not present in Data\n', psm_fields{b});
+            end
+            continue
+        elseif DEBUG_LEVEL > 1
             fprintf('  Gridding %s using PSM\n', psm_fields{b});
         end
         
@@ -193,7 +208,12 @@ for a=1:numel(Data)
     
     unequal_weights = false(size(BEHR_Grid.GridLon))';
     for b=1:numel(cvm_fields)
-        if DEBUG_LEVEL > 1
+        if ~isfield(Data, cvm_fields{b})
+            if DEBUG_LEVEL > 0
+                fprintf('  Skipping gridding %s with CVM because it is not present in Data\n', cvm_fields{b});
+            end
+            continue
+        elseif DEBUG_LEVEL > 1
             fprintf('  Gridding %s using CVM\n', cvm_fields{b})
         end
         
@@ -251,7 +271,9 @@ for a=1:numel(Data)
     OMI_PSM(a).Only_CVM = only_cvm;
 
     for b=1:numel(swath_attr_fields)
-        OMI_PSM(a).(swath_attr_fields{b}) = swath_attrs.(swath_attr_fields{b}){a};
+        if isfield(swath_attrs, swath_attr_fields{b})
+            OMI_PSM(a).(swath_attr_fields{b}) = swath_attrs.(swath_attr_fields{b}){a};
+        end
     end
 end
 
