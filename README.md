@@ -25,14 +25,14 @@ references to HDF5 read/write code.
 
 ## A note on h5py
 
-Matlab bundles its own version of HDF5 (1.8.12 as of Matlab 2017b) and Strange Things can happen if h5py is using a different HDF5 library. Unfortunately 1.8.12 is one of the HDF5 versions that isn't available in the default conda channel. So, we need to setup h5py based on hdf=1.8.12.
+Matlab bundles its own version of HDF5 (1.8.12 as of Matlab 2017b) and strange things can happen if h5py is using a different HDF5 library. Unfortunately 1.8.12 is one of the HDF5 versions that isn't available in the default conda channel. So, we need to setup h5py based on hdf=1.8.12.
 
-Download [the HDF5 source (1.8.12)](https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8/hdf5-1.8.12/bin/linux-x86_64/) and configure it;
+Download [the HDF5 source (1.8.12)](https://portal.hdfgroup.org/display/support/Downloads) and set libraries:
 
 ```
-./configure --prefix=/path/to/hdf5
-make
-make install
+1. If using the shared libraries, you must add the HDF5 library path
+to the LD_LIBRARY_PATH variable.
+2. Run ./h5redeploy to change site specific paths in the scripts.
 ```
 
 Build h5py against this version of HDF5.
@@ -40,7 +40,6 @@ Build h5py against this version of HDF5.
 ```
 python setup.py configure --hdf5=/path/to/hdf5
 python setup.py configure --hdf5-version=1.8.12
-python setup.py configure --mpi
 ```
 ```
 ********************************************************************************
@@ -48,12 +47,15 @@ python setup.py configure --mpi
 
     Path to HDF5: '/nuist/u/home/yinyan/xin/software/hdf5_1.8.12'
     HDF5 Version: '1.8.12'
-     MPI Enabled: True
+     MPI Enabled: False
 Rebuild Required: True
 
 ********************************************************************************
 ```
 ```
 python setup.py install
+**********************************
+if you set another env for BEHR, you need to specify the prefix like this:
+python setup.py install --prefix=/nuist/u/home/yinyan/xin/work/anaconda3/envs/behr
 ```
 This works for Python 3 with gcc only.

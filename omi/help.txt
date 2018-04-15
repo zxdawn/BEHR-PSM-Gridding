@@ -5,6 +5,8 @@ you can try them. Then run the following two commands:
 
 python setup.py build
 python setup.py install --user
+if you set another env for BEHR, you need to specify the prefix like this:
+python setup.py install --prefix=/nuist/u/home/yinyan/xin/work/anaconda3/envs/behr
 
 You should then be able to import the "omi" module as long
 as you are not in this directory, or probably any directory
