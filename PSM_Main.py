@@ -28,7 +28,8 @@ psm_req_datasets = ['SpacecraftAltitude', 'SpacecraftLatitude', 'SpacecraftLongi
 # These are fields that, if gridded, should have their value masked for pixels affected by the row anomaly
 row_anomaly_affected_fields = ['CloudFraction', 'CloudRadianceFraction', 'CloudPressure', 'ColumnAmountNO2',
                                'SlantColumnAmountNO2', 'ColumnAmountNO2Trop', 'ColumnAmountNO2TropStd',
-                               'ColumnAmountNO2Strat', 'BEHRColumnAmountNO2Trop', 'BEHRColumnAmountNO2TropVisOnly']
+                               'ColumnAmountNO2Strat', 'BEHRColumnAmountNO2Trop', 'BEHRColumnAmountNO2TropVisOnly',
+                               'BEHRColumnAmountLNOxTrop', 'BEHRColumnAmountLNOxTrop_pickering']
 
 # These are fields that should be 1D because they have only the
 # along or across track dimension (not both). We use this cell array during
@@ -52,7 +53,8 @@ one_d_fields = ['SpacecraftAltitude', 'SpacecraftLatitude', 'SpacecraftLongitude
 
 # These are fields that should be masked if the VcdQualityFlags field indicates a problem with the VCD algorithm
 vcd_qualtity_affected_fields = ['ColumnAmountNO2Trop', 'ColumnAmountNO2TropStd', 'ColumnAmountNO2Strat',
-                                'ColumnAmountNO2', 'BEHRColumnAmountNO2Trop', 'BEHRColumnAmountNO2TropVisOnly']
+                                'ColumnAmountNO2', 'BEHRColumnAmountNO2Trop', 'BEHRColumnAmountNO2TropVisOnly',
+                                'BEHRColumnAmountLNOxTrop','BEHRColumnAmountLNOxTrop_pickering']
 
 # Flag fields are fields that should be gridded using a bitwise OR operator rather than adding each value multiplied
 # by its weight. This assumes that the flag uses 1 bits to indicate the presence of an error or warning during the
